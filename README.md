@@ -1,1 +1,1 @@
-# PROJECTS
+# Titanic dataset analysys
