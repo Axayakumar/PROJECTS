@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sentimental Analysis for Twitter</title>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.4/d3.layout.cloud.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=0.8"> 
+    <style>
+            
+            .cssHeaderRow {
+                background-color: coral;
+                border-radius: 10px;
+            }
+            .cssTableRow {
+                background-color: #F0F1F2;
+            }
+            .cssOddTableRow {
+                background-color: #F0F1F2;
+            }
+            .cssSelectedTableRow {
+                font-size: 20px;
+                font-weight:bold;
+            }
+            .cssHoverTableRow {
+                background: #ccc;
+            }
+            .cssHeaderCell {
+                color: #FFFFFF;
+                font-size: 15px;
+                padding: 10px !important;
+                border: solid 1px #FFFFFF;
+            }
+            .cssTableCell {
+                font-size: 15px;
+                padding: 10px !important;
+                border: solid 1px #FFFFFF;
+            }
+            .cssRowNumberCell {
+                text-align: center;
+            }
+        </style>
+  </style>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages': ['corechart','bar','table']});
+     
+     
+
+      google.charts.setOnLoadCallback(drawChartSentimentPie);
+      google.charts.setOnLoadCallback(drawTable);
+      google.charts.setOnLoadCallback(drawEmotionalChart);
+      
+      function drawEmotionalChart() {
+              var data = google.visualization.arrayToDataTable({{emotion_plot|safe}});
+        
+              var view = new google.visualization.DataView(data);
+              
+        
+              var options = {
+                 //title: "Emotional Analysis on {{search}}",
+                width: 400,
+                height: 400,
+                bar: {groupWidth: "55%"},
+                legend: { position: "none" },
+                backgroundColor: '#fff',
+                hAxis: {
+                title: 'Types of Emotion',
+                minValue: 0,
+                colors: ['orange']
+                },
+               vAxis: {
+                title: 'Emotional Analysis'
+                 },
+      
+              };
+              var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+              chart.draw(view, options);
+          }
+       
+    function drawChartSentimentPie() {
+        var data = google.visualization.arrayToDataTable({{sentiment_pie|safe}});
+        var options = {//'title':'Sentiment Analysis of tweets',
+                       width:400,
+                       height:400,
+                       colors:['#704f50','red','blue']};
+        var chart = new google.visualization.PieChart(document.getElementById('sentiment-pie'));
+        chart.draw(data, options);
+      }
+var cssClassNames = {
+                    'headerRow': 'cssHeaderRow',
+                    'tableRow': 'cssTableRow',
+                    'oddTableRow': 'cssOddTableRow',
+                    'selectedTableRow': 'cssSelectedTableRow',
+                    'hoverTableRow': 'cssHoverTableRow',
+                    'headerCell': 'cssHeaderCell',
+                    'tableCell': 'cssTableCell',
+                    'rowNumberCell': 'cssRowNumberCell'
+                };
+              var options = {
+                    showRowNumber: true,
+                    cssClassNames: cssClassNames
+                   
+                };
+      function drawTable() {
+        var data = google.visualization.arrayToDataTable({{table|safe}});
+        var table = new google.visualization.Table(document.getElementById('retweet-table'));
+        table.draw(data);
+      }
+</script>
+<style>
+  form input[type="search"]
+  {
+    border: none;
+    border-bottom: 1px solid black;
+    padding:20px;
+    font-size: 18px;
+    margin:0px;
+  }
+  button{
+    padding:20px;
+    
+  }
+</style>
+</head>
+<body>
+    <center>
+          <h1>Enter any Hashtag to analyze the tweets.</h1>
+            <form method="POST" action ="/">
+              <input type="search" placeholder="Serach Hashtag"  name="srch-term" id="srch-term">
+              <button  type="submit">Submit</button>
+            </form>
+          </center>
+           
+          <div class="row" style="margin-top: 50px;">
+            <div class="col-lg-4" style="text-align: center;">
+              <h4>{{search}} Sentiment Analysis</h4>
+              <div id="sentiment-pie"></div>
+            </div>
+            <div class="col-lg-3" style="text-align: center;">
+              <h4>{{search}} Emotional Analysis</h4>
+              <div id="columnchart_values"></div>
+            </div>
+            <div class="col-lg-5" style="text-align: center;">
+              <h4>{{search}} WordCloud Visualization</h4>
+              <div id="my_cloud"></div>
+            </div>
+          </div>
+            <div class="container">
+             <div class="row">
+               <div class="col">
+                 <div id="retweet-table"></div>
+               </div>
+             </div>
+            </div>
+             
+           
+  
+                
+       
+
+      
+                
+            
+
+            <script>
+              
+              var word_freqs = {{ word_freqs|safe }};
+              max_freq = {{ max_freq }};
+              fill = d3.scale.category20();
+              layout = d3.layout.cloud()
+                  .size([300, 300])
+                  .words(word_freqs)
+                  .padding(2)
+                  .rotate(0)
+                  .font("Impact")
+                  .fontSize(function(d) {
+                     return (d.size/max_freq)*200;
+                  })
+                  .on("end", draws);
+            
+              layout.start();
+            
+              function draws(words) {
+                d3.select("#my_cloud").append("svg")
+                  .attr("width", layout.size()[0])
+                   .attr("height", layout.size()[1])
+                  .append("g")
+                  .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                  .selectAll("text")
+                  .data(words)
+                  .enter().append("text")
+                  .style("font-size", function(d) { return d.size + "px"; })
+                  .style("font-family", "Impact")
+                  .style("fill", function(d, i) { return fill(i); })
+                  .attr("text-anchor", "middle")
+                  .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                  })
+                  .text(function(d) { return d.text; });
+              }
+            </script> 
+</body>
+</html>
